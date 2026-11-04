@@ -1,20 +1,30 @@
-const fs = require('fs').promises;
-const path = require('path');
+function viewResources() {
+    var response = '';
+    var request = new XMLHttpRequest();
 
-const RESOURCES_FILE = path.join('utils', 'resources.json');
+    request.open('GET', '/view-resources', true);
+    request.setRequestHeader('Content-Type', 'application/json');
 
-async function viewResources(req, res) {
-    try {
-        const data = await fs.readFile(RESOURCES_FILE, 'utf8');
-        const allResources = JSON.parse(data);
-        return res.status(200).json(allResources);
-    } catch (error) {
-        // Handle case where file does not exist yet
-        if (error.code === 'ENOENT') {
-            return res.status(200).json([]); // return empty list if no file
+    request.onload = function () {
+        response = JSON.parse(request.responseText);
+
+        var html = '';
+        for (var i = 0; i < response.length; i++)
+        {
+            html += '<tr>' +
+                '<td>' + (i + 1) + '</td>' +
+                '<td>' + response[i].name + '</td>' +
+                '<td>' + response[i].location + '</td>' +
+                '<td>' + response[i].description + '</td>' +
+                '<td>' + response[i].owner + '</td>' +
+                '<td>' +
+                    '<button type="button" class="btn btn-warning" onclick="editResource(\'' + JSON.stringify(response[i]).replaceAll('\'', '&quot;') + '\')">Edit </button>' +
+                    '<button type="button" class="btn btn-danger" onclick="deleteResource(\'' + response[i].id + '\')">Delete</button>' +
+                '</td>' +
+                '</tr>'
         }
-        return res.status(500).json({ message: error.message });
-    }
-}
+        document.getElementById('tableContent').innerHTML = html;
+    };
 
-module.exports = { viewResources };
+    request.send();
+}
